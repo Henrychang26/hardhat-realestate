@@ -70,6 +70,24 @@ describe("RealEstate", () => {
             await transaction.wait()
             console.log("Inspector updates status")
 
+            //Buyer approves sale
+            transaction = await escrow.connect(buyer).approveSale()
+            await transaction.wait()
+            console.log("Buyer approves sale")
+
+            //Seller approves sale
+            transaction = await escrow.connect(seller).approveSale()
+            await transaction.wait()
+            console.log("Seller approves sale")
+
+            //Lender funds the sale
+            transaction = await lender.sendTransaction({ to: escrow.address, value: ether(80) })
+
+            //Lender approves sale
+            transaction = await escrow.connect(lender).approveSale()
+            await transaction.wait()
+            console.log("Lender approves sale")
+
             //finalize sale
             transaction = await escrow.connect(buyer).finalizeSale()
             await transaction.wait(1)
@@ -77,6 +95,11 @@ describe("RealEstate", () => {
 
             //expects buyer to be NFT owner after the sale
             expect(await realEstate.ownerOf(nftID)).to.equal(buyer.address)
+
+            //Expect seller to receive funds
+            balance = await ethers.provider.getBalance(seller.address)
+            console.log("Seller balance:", ethers.utils.formatEther(balance))
+            expect(balance).to.be.above(ether(10099))
         })
     })
 })
